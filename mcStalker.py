@@ -1,70 +1,136 @@
-from datetime import timedelta
-from ratelimit import limits
-import asyncio, aiohttp, logging, json
-
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
-
-""" 
-TO DO
-- Add better ratelimiting
-- Test logging
-- Make qServer work with API Key
-
-"""
-
-try:
-    log.debug(
-        "======================= MCStalker's API Wrapper has successfully begun to run ======================="
-    )
-except:
-    pass
+import asyncio, aiohttp, json
 
 
-def addLog(type="debug", content="None"):
-    if type == "debug":
-        log.debug(content)
-    elif type == "info":
-        log.info(content)
-    elif type == "warning":
-        log.warning(content)
-    elif type == "error":
-        log.error(content)
-    elif type == "critical":
-        log.critical(content)
+class MCStalker:
+    def __init__(self, apiKey):
+        self.key = apiKey
+
+    class invalidApiKey(Exception):
+        """The invalidApiKey error."""
+
+        def __init__(self, *args):
+            self.message = args[0]
+
+        def __str__(self):
+            return "Invalid API Key (Register at https://mcstalker.com/register)- {0} ".format(self.message)
 
 
-async def req(url, headers, data=None, method="get"):
-    async with aiohttp.ClientSession() as session:
-        if method == "get":
-            async with session.get(url, headers=headers, data=data) as response:
-                return await response.json()
-        elif method == "post":
-            async with session.post(url, headers=headers, data=data) as response:
-                return await response.json(content_type="text/html")
+class Stats(MCStalker):
+    class _Stats:
+        """The statistics of the API.
+        updated: str = The last time the statistics were updated.
+        players: int = The number of players currently in the database.
+        servers: int = The number of servers currently in the database.
+        raw: dict = The raw, cleaned data from the API.
+        """
+
+        updated: str = ""
+        servers: int = None
+        players: int = None
+        raw: dict = None
+
+    def returnCleanStatsDict(self, stats: dict):
+        _stats = {}
+        _stats["lastUpdated"] = stats.get("updated")
+        _stats["servers"] = stats.get("servers")
+        _stats["players"] = stats.get("players")
+        return _stats
+
+    def returnStatsObject(self, statsDict: dict):
+        stats = self._Stats()
+        stats.updated = statsDict.get("lastUpdated")
+        stats.servers = statsDict.get("servers")
+        stats.players = statsDict.get("players")
+        stats.raw = statsDict
+
+    async def requestStats(self):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                "https://backend.mcstalker.com/api/stats",
+                headers={"Authentication": f"Bearer {self.key}"},
+            ) as resp:
+                if resp.status == 200:
+                    return await resp.json()
+                elif resp.status == 403:
+                    raise MCStalker.invalidApiKey(await resp.json()["message"])
+
+    async def returnStats(self):
+        return self.returnStatsObject(
+            self.returnCleanStatsDict(await self.requestStats())
+        )
 
 
-async def qServer(data):
-    url = "https://backend.mcstalker.com/api/filterservers"
-    async with aiohttp.ClientSession() as session:
-        async with session.post(
-            url, headers={"content-type": "application/json"}, data=json.dumps(data)
-        ) as resp:
-            return await resp.json()
+class Player(MCStalker):
+    class _Player:
+        """The _Player object, which is used to generate information about a player. Please read the docs for Player() instead."""
 
-    #  async with aiohttp.ClientSession() as session:
-    #          async with session.post(url, data=d2) as resp:
-    #                  print(resp)
+        name = ""
+        uuid = ""
+        addedAt = ""
+        lastSeen = ""
+        servers = []
+        raw = ""
+
+    class playerNotFound(Exception):
+        """The requestError error."""
+
+        def __init__(self, *args):
+            self.message = args[0]
+
+        def __str__(self):
+            return "Player was not found - {0} ".format(self.message)
+
+    async def requestPlayer(self, url):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                url, headers={"Authorization": f"Bearer {self.key}"}
+            ) as resp:
+                return await resp.json(), resp.status
+
+    def returnPlayerObject(self, player: dict):
+        """Returns a player object.
+
+        Args:
+            player (dict): The dict containing player information.
+
+        Returns:
+            Player._Player: The player object.
+        """
+        _player = self._Player()
+        _player.name = player["name"]
+        _player.uuid = player["uuid"]
+        _player.addedAt = player["addedAt"]
+        _player.lastSeen = player["lastSeen"]
+        _player.raw = player
+        return _player
+
+    def returnCleanPlayerDict(self, player: dict):
+        _player = {
+            "name": player.get("username"),
+            "uuid": player.get("uuid"),
+            "addedAt": player.get("createdAt"),
+            "lastSeen": player.get("updatedAt"),
+            "servers": player.get("servers"),
+        }
+        return _player
+
+    async def returnPlayer(self, username):
+        player = await self.requestPlayer(
+            "https://backend.mcstalker.com/api/searchusername/" + username
+        )
+        status = player[1]
+        player = player[0]
+        if status == 200:
+            player = self.returnCleanPlayerDict(player)
+            obj = self.returnPlayerObject(player)
+            return obj
+        if status == 403:
+            raise self.invalidApiKey(player["error"])
+        else:
+            raise self.playerNotFound(player["error"])
 
 
-# @limits(calls=2, period=timedelta(seconds=1).total_seconds())
-# async def get_foobar():
-#     response = await req('https://httpbin.org/get')
-#     response.raise_for_status()
-#     return response.json()
-
-
-class Converters:
+class Server(MCStalker):
     class _ipInfo:
         loc = None
         org = None
@@ -76,7 +142,20 @@ class Converters:
         timezone = None
 
     class _Server:
-        """The _Server object, which is used to generate information about a server. Please read the docs for Server() instead."""
+        """The Server Object.
+        ip: str = The IP address of the server.
+        hostname: str = The hostname of the server.
+        favicon: base64 string = The favicon of the server.
+        players: list[MCStalker.Player()] = A list of players on the server.
+        slots: dict{'online':None, 'max':None} = Player slots of the server.
+        motd: str = The MOTD of the server.
+        added: Unix timestamp = The time the server was added to the database.
+        lastPinged: Unix timestamp = The time the server was last updated.
+        vanilla: bool = Whether the server is vanilla or not.
+        ipInfo: MCStalker._ipInfo = The IP information of the server.
+        version: str = The human friendly version of the server.
+        raw: dict = The raw Cleaned JSON response from the server.
+        """
 
         ip = ""
         favicon = ""
@@ -84,163 +163,143 @@ class Converters:
         players = []
         slots = {"online": None, "max": None}
         motd = ""
-        added = ""
-        lastPinged = ""
+        added = "Unix Timestamp"
+        lastPinged = "Unix Timestamp"
         vanilla = bool
-        ipInfo = dict
+        ipInfo: dict = None
+        version: str = None
         raw = ""
 
-    class _Player:
-        """The _Player object, which is used to generate information about a player. Please read the docs for Player() instead."""
+    class serverNotFound(Exception):
+        """The requestError error."""
 
-        name = ""
-        uuid = ""
-        raw = ""
-
-
-apiURL = "https://backend.mcstalker.com/api/"
-
-
-def returnCleanServerDict(server: dict):
-    print(server)
-    _server = {
-        "ip": server.get("ip"),
-        "favicon": server.get("favicon"),
-        "hostname": server.get("ipInfo").get("hostname"),
-        "players": server.get("players"),
-        "version": server.get("versionName"),
-        "slots": {"online": server["online"], "max": server["max"]},
-        "motd": server["motd"]
-        if type(server["motd"]) is str
-        else server["motd"]["text"]
-        if server["motd"]["text"] != ""
-        else server["motd"]["extra"],
-        "authStatus": server.get("authStatus"),
-        "alive": server.get("alive"),
-        "vanilla": server.get("vanilla"),
-        "addedAt": server.get("createdAt"),
-        "lastPinged": server.get("updatedAt"),
-        "ipInfo": server.get("ipInfo"),
-    }
-    # del _server['ipInfo']['hostname']
-    return _server
-
-
-def eKeyError(code):
-    try:
-        exec(code)
-    except KeyError:
-        pass
-
-
-def returnIP_Info(ipInfo: dict):
-    """Converts a dictionary to an IP_Info object.
-
-    Args:
-        ipInfo (dict): The dict containing IP information.
-
-    Returns:
-        Converters._ipInfo: The IP_Info object.
-    """
-    _ipInfo = Converters._ipInfo()
-    _ipInfo.loc = ipInfo.get("loc")
-    _ipInfo.org = ipInfo.get("org")
-    _ipInfo.city = ipInfo.get("city")
-    _ipInfo.postal = ipInfo.get("postal")
-    _ipInfo.region = ipInfo.get("region")
-    _ipInfo.country = ipInfo.get("country")
-    _ipInfo.hostname = ipInfo.get("hostname")
-    _ipInfo.timezone = ipInfo.get("timezone")
-    return _ipInfo
-
-
-def returnServer(server: dict):
-    """Converts a dictionary to a Server object.
-
-    Args:
-        server (dict): The dict containing server information.
-
-    Returns:
-        Converters._Server: The server object.
-    """
-    server = returnCleanServerDict(server)
-    _server = Converters._Server()
-    _server.ip = server.get("ip")
-    _server.favicon = server.get("favicon")
-    _server.hostname = server.get("hostname")
-    try:
-        _server.players = [returnPlayer(player) for player in server["players"]]
-    except TypeError:
-        _server.players = []
-    _server.slots = server.get("slots")
-    _server.motd = server.get("motd")
-    _server.added = server.get("addedAt")
-    _server.lastPinged = server.get("lastPinged")
-    _server.vanilla = server.get("vanilla")
-    _server.ipInfo = returnIP_Info(server["ipInfo"])
-    _server.raw = server
-    return _server
-
-    # _server.favicon = server["favicon"]
-    # _server.hostname = server["hostname"]
-    # _server.players = [returnPlayer(player) for player in server["players"]]
-    # _server.slots = server["slots"]
-    # _server.motd = server["motd"]
-    # _server.added = server["addedAt"]
-    # _server.lastPinged = server["lastPinged"]
-    # _server.vanilla = server["vanilla"]
-    # _server.ipInfo = returnIP_Info(server["ipInfo"])
-    # _server.raw = server
-    # return _server
-
-
-def returnPlayer(player: dict):
-    _player = Converters._Player()
-    _player.name = player["username"]
-    _player.uuid = player["uuid"]
-    _player.raw = player
-    return _player
-
-
-class Errors:
-    class invalidApiKey(Exception):
         def __init__(self, *args):
             self.message = args[0]
 
         def __str__(self):
-            return "Invalid API Key - {0} ".format(self.message)
+            return "Server was not found - {0} ".format(self.message)
 
-    class requestError(Exception):
-        def __init__(self, *args):
-            self.message = args[0]
-
-        def __str__(self):
-            return "Error sending the request - {0} ".format(self.message)
-
-
-Errors = Errors()
-
-
-class Server:
-    def __init__(self, key):
-        """Initialising the Server() class.
+    def returnCleanMotd(self, motd):
+        """DONT USE, ALTERNATIVE USED IN CODE!!!
+        Returns a cleaned MOTD.
 
         Args:
-            key (str): The API key to use.
+            motd (any): The MOTD to clean.
+
+        Returns:
+            str: The cleaned MOTD.
         """
-        asyncio.run(self.init(key))
+        if type(motd) is list:
+            return "".join([letter["text"] for letter in motd])
+        elif type(motd) is str:
+            return motd
+        elif type(motd) is dict:
+            try:
+                return motd["text"]
+            except KeyError:
+                return self.returnCleanMotd(motd["extra"])
+        return None
 
-    async def init(self, key):
-        """This is not for users to use. It is for the API wrapper. Ignore and move on."""
-        self.key = key
-        # r = await req(f"{apiURL}tokenCheck", {"Authorization": self.key})
-        # if not r["success"]:
-        #     addLog(type="critical", content="[SERVER] [ERROR] - API Key is incorrect.")
-        #     raise Errors.invalidAPI_Key(
-        #         f"Your API Key ({self.key}) was incorrect, please check if you have internet and are not being ratelimited. You can generate an API key at https://mcstalker.com/register."
-        #     )
+    def returnCleanServerDict(self, server: dict):
+        """Returns a clean dict with only the things we need in all the correct places.
 
-    @limits(calls=2, period=timedelta(seconds=1).total_seconds())
+        Args:
+            server (dict): The dict to clean.
+
+        Returns:
+            dict: The cleaned dict.
+        """
+        _server = {
+            "ip": server.get("ip"),
+            "favicon": server.get("favicon"),
+            "hostname": server.get("ipInfo").get("hostname"),
+            "players": server.get("players"),
+            "version": server.get("versionName"),
+            "slots": {"online": server.get("online"), "max": server.get("max")},
+            "motd": server.get("searchMotd"),
+            "authStatus": server.get("authStatus"),
+            "alive": server.get("alive"),
+            "vanilla": server.get("vanilla"),
+            "addedAt": server.get("createdAt"),
+            "lastPinged": server.get("updatedAt"),
+            "ipInfo": server.get("ipInfo"),
+        }
+        return _server
+
+    def returnServerObject(self, server: dict):
+        """Converts a dictionary to a Server object.
+
+        Args:
+            server (dict): The dict containing server information.
+
+        Returns:
+            Converters._Server: The server object.
+        """
+        _server = self._Server()
+        _server.ip = server.get("ip")
+        _server.favicon = server.get("favicon")
+        _server.hostname = server.get("hostname")
+        _server.slots = server.get("slots")
+        try:
+            playerClass = Player(self.key)
+            _server.players = [
+                playerClass.returnPlayerObject(
+                    playerClass.returnCleanPlayerDict(player)
+                )
+                for player in server["players"]
+            ]
+        except TypeError:
+            _server.players = []
+
+        _server.motd = server.get("motd")
+        _server.added = server.get("addedAt")
+        _server.version = server.get("version")
+        _server.lastPinged = server.get("lastPinged")
+        _server.vanilla = server.get("vanilla")
+        _server.ipInfo = self.returnIpObject(server["ipInfo"])
+        _server.raw = server
+        return _server
+
+    def returnIpObject(self, ipInfo: dict):
+        """Converts a dictionary to an IP_Info object.
+
+        Args:
+            ipInfo (dict): The dict containing IP information.
+
+        Returns:
+            Converters._ipInfo: The IP_Info object.
+        """
+        _ipInfo = self._ipInfo()
+        _ipInfo.loc = ipInfo.get("loc")
+        _ipInfo.org = ipInfo.get("org")
+        _ipInfo.city = ipInfo.get("city")
+        _ipInfo.postal = ipInfo.get("postal")
+        _ipInfo.region = ipInfo.get("region")
+        _ipInfo.country = ipInfo.get("country")
+        _ipInfo.hostname = ipInfo.get("hostname")
+        _ipInfo.timezone = ipInfo.get("timezone")
+        return _ipInfo
+
+    async def requestServer(self, url):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                url, headers={"Authorization": f"Bearer {self.key}"}
+            ) as response:
+                return await response.json(), response.status
+
+    async def requestTopServers(self, data):
+        url = "https://backend.mcstalker.com/api/filterservers"
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                url,
+                headers={
+                    "content-type": "application/json",
+                    "Authorization": f"Bearer {self.key}",
+                },
+                data=json.dumps(data),
+            ) as resp:
+                return await resp.json(content_type="application/json"), resp.status
+
     async def returnServer(self, ip: str):
         """Returns a Server object.
 
@@ -250,17 +309,20 @@ class Server:
         Returns:
             Converters._Server: The server object.
         """
-        response = await req(f"{apiURL}searchserver/{ip}", {"Authorization": self.key})
-        # response = await response.json()
-        if "error" not in response:
-            return returnServer(response)
-        addLog(
-            "error",
-            f"[CLIENT] [ERROR] returnServer() has failed for {ip} - {response['error']}",
+        response = await self.requestServer(
+            f"https://backend.mcstalker.com/api/searchserver/{ip}"
         )
-        return Errors.requestError(response["error"])
+        # response = await response.json()
+        status = response[1]
+        response = response[0]
+        if status == 200:
+            server = self.returnServerObject(self.returnCleanServerDict(response))
+            return server
+        if status == 403:
+            raise self.invalidApiKey(response.get("error"))
+        else:
+            raise self.serverNotFound(response.get("error"))
 
-    @limits(calls=2, period=timedelta(seconds=1).total_seconds())
     async def returnTopServers(
         self,
         version: int = 756,
@@ -309,14 +371,14 @@ class Server:
         # response = await req(
         #     f"{apiURL}filterservers", {"Authorization": self.key, "content-type":"application/json"}, options, "post"
         # )
-        response = dict(await qServer(options))
-        if "error" not in response.keys():
-            return [returnServer(server) for server in response["result"]]
-        addLog(
-            "error",
-            f"[CLIENT] [ERROR] returnTopServers() has failed - {response['error']}",
-        )
-        return Errors.requestError(response["error"])
-
-
-# x = {"ip": "ip here", "favicon": "favicon here", "hostname": "hostname here", "players": ["name", "name2"], "slots": {"online": "how many online", "max": "how many max"}, "motd": "motd here (clean)", "added": "when server was added, unix", "lastPinged": "when it was last pinged, unix", "vanilla": true, "country": {"country": "country here", "location": "location here", "origin": "origin here", "city": "city here", "postal": "postal here", "region": "region here", "timezone": "timezone here"}}
+        response = await self.requestTopServers(options)
+        status = response[1]
+        response = dict(response[0])
+        if status == 200:
+            return [
+                self.returnServerObject(self.returnCleanServerDict(server))
+                for server in response["result"]
+            ]
+        if status == 403:
+            raise self.invalidApiKey(response["error"])
+        raise self.serverNotFound(response["error"])
