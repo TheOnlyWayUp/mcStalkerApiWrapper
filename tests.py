@@ -1,6 +1,6 @@
 #NEEDS `pip install cprint` TO FUNCTION
 
-import functions, asyncio
+import mcstalker, asyncio
 from cprint import *
 
 allGood = 0
