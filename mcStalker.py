@@ -71,15 +71,14 @@ class Stats(MCStalker):
         Returns:
             dict: The statistics of the API.
         """
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                "https://backend.mcstalker.com/api/stats",
-                headers={"Authentication": f"Bearer {self.key}"},
-            ) as resp:
-                if resp.status == 200:
-                    return await resp.json()
-                if resp.status == 403:
-                    raise MCStalker.invalidApiKey(await resp.json()["message"])
+        async with aiohttp.ClientSession() as session, session.get(
+            "https://backend.mcstalker.com/api/stats",
+            headers={"Authentication": f"Bearer {self.key}"},
+        ) as resp:
+            if resp.status == 200:
+                return await resp.json()
+            if resp.status == 403:
+                raise MCStalker.invalidApiKey(await resp.json()["message"])
 
     async def returnStats(self):
         """Returns the statistics of the API.
@@ -166,11 +165,10 @@ class Player(MCStalker):
         Returns:
             dict: The player information.
         """
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                url, headers={"Authorization": f"Bearer {self.key}"}
-            ) as resp:
-                return await resp.json(), resp.status
+        async with aiohttp.ClientSession() as session, session.get(
+            url, headers={"Authorization": f"Bearer {self.key}"}
+        ) as resp:
+            return await resp.json(), resp.status
 
     def returnPlayerObject(self, player: dict):
         """Returns a player object.
@@ -397,11 +395,10 @@ class Server(MCStalker):
         Returns:
             dict: The JSON response.
         """
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                url, headers={"Authorization": f"Bearer {self.key}"}
-            ) as response:
-                return await response.json(), response.status
+        async with aiohttp.ClientSession() as session, session.get(
+            url, headers={"Authorization": f"Bearer {self.key}"}
+        ) as response:
+            return await response.json(), response.status
 
     async def requestTopServers(self, data: dict) -> dict:
         """Requests a list of servers from the API.
@@ -413,16 +410,15 @@ class Server(MCStalker):
             dict: The JSON response.
         """
         url = "https://backend.mcstalker.com/api/filterservers"
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                url,
-                headers={
-                    "content-type": "application/json",
-                    "Authorization": f"Bearer {self.key}",
-                },
-                data=json.dumps(data),
-            ) as resp:
-                return await resp.json(content_type="application/json"), resp.status
+        async with aiohttp.ClientSession() as session, session.post(
+            url,
+            headers={
+                "content-type": "application/json",
+                "Authorization": f"Bearer {self.key}",
+            },
+            data=json.dumps(data),
+        ) as resp:
+            return await resp.json(content_type="application/json"), resp.status
 
     async def returnServer(self, ip: str) -> Server._Server:
         """Returns a Server object.
