@@ -35,7 +35,8 @@ class Stats(MCStalker):
         players: int = None
         raw: dict = None
 
-    def returnCleanStatsDict(self, stats: dict):
+    @staticmethod
+    def returnCleanStatsDict(stats: dict):
         """Returns the statistics of the API.
 
         Args:
