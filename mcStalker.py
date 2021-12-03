@@ -75,7 +75,7 @@ class Stats(MCStalker):
             ) as resp:
                 if resp.status == 200:
                     return await resp.json()
-                elif resp.status == 403:
+                if resp.status == 403:
                     raise MCStalker.invalidApiKey(await resp.json()["message"])
 
     async def returnStats(self):
@@ -293,9 +293,9 @@ class Server(MCStalker):
         """
         if type(motd) is list:
             return "".join([letter["text"] for letter in motd])
-        elif type(motd) is str:
+        if type(motd) is str:
             return motd
-        elif type(motd) is dict:
+        if type(motd) is dict:
             try:
                 return motd["text"]
             except KeyError:
