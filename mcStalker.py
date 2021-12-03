@@ -59,7 +59,48 @@ class Stats(MCStalker):
             self.returnCleanStatsDict(await self.requestStats())
         )
 
+def Help():
+    x = """
+The MCStalker API Wrapper
+---------------------------
+Async-Friendly wrapper for the MCStalker API.
 
+Endpoints currently supported - 
+- /stats
+- /searchusername
+- /searchserver
+- /filterservers
+
+YOU NEED AN API KEY TO USE THIS WRAPPER.
+You can register for a key at https://mcstalker.com/register
+
+Imports - 
+- from mcStalker import Player(apiKey)
+- from mcStalker import Server(apiKey)
+- from mcStalker import Stats(apiKey)
+
+Usage -
+
+    Stats -
+        from mcStalker import Stats
+        stats = Stats(apiKey)
+        asyncio.run(stats.returnStats() -> Stats._Stats Object)
+
+    Player -
+        from mcStalker import Player
+        player = Player(apiKey)
+        asyncio.run(player.returnPlayer(username) -> Player._Player Object)
+
+    Server - 
+        from mcStalker import Server
+        server = Server(apiKey)
+        asyncio.run(server.returnServer(ip) -> Server._Server Object)
+        asyncio.run(server.returnTopServers() -> [Server._Server Object, Server._Server Object, ...])
+
+Created by TheOnlyWayUp#1231 - https://github.com/TheOnlyWayUp/
+MCStalker created by SSouper - https://github.com/SSouper
+    """
+    print(x)
 class Player(MCStalker):
     class _Player:
         """The _Player object, which is used to generate information about a player. Please read the docs for Player() instead."""
