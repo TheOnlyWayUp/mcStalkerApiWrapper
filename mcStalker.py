@@ -2,8 +2,8 @@ import asyncio, aiohttp, json
 
 
 class MCStalker:
-    """The Parent Class, Do not import this.
-    """
+    """The Parent Class, Do not import this."""
+
     def __init__(self, apiKey):
         self.key = apiKey
 
@@ -14,11 +14,14 @@ class MCStalker:
             self.message = args[0]
 
         def __str__(self):
-            return "Invalid API Key (Register at https://mcstalker.com/register)- {0} ".format(self.message)
+            return "Invalid API Key (Register at https://mcstalker.com/register)- {0} ".format(
+                self.message
+            )
 
 
 class Stats(MCStalker):
     """The Stats class."""
+
     class _Stats:
         """The statistics of the API.
         updated: str = The last time the statistics were updated.
@@ -88,6 +91,7 @@ class Stats(MCStalker):
             self.returnCleanStatsDict(await self.requestStats())
         )
 
+
 def Help():
     """Returns the help message."""
     x = """
@@ -131,6 +135,8 @@ Created by TheOnlyWayUp#1231 - https://github.com/TheOnlyWayUp/
 MCStalker created by SSouper - https://github.com/SSouper
     """
     print(x)
+
+
 class Player(MCStalker):
     class _Player:
         """The _Player object, which is used to generate information about a player. Please read the docs for Player() instead."""
@@ -229,10 +235,11 @@ class Player(MCStalker):
 
 
 class Server(MCStalker):
-    """The Server class, which is used to generate information about a server.
-    """
+    """The Server class, which is used to generate information about a server."""
+
     class _ipInfo:
         """The _ipInfo object, which is used to generate information about an IP."""
+
         loc = None
         org = None
         city = None
@@ -381,7 +388,7 @@ class Server(MCStalker):
         _ipInfo.timezone = ipInfo.get("timezone")
         return _ipInfo
 
-    async def requestServer(self, url:str):
+    async def requestServer(self, url: str):
         """Requests a server from the API.
 
         Args:
@@ -396,7 +403,7 @@ class Server(MCStalker):
             ) as response:
                 return await response.json(), response.status
 
-    async def requestTopServers(self, data:dict) -> dict:
+    async def requestTopServers(self, data: dict) -> dict:
         """Requests a list of servers from the API.
 
         Args:
