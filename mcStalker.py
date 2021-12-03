@@ -225,8 +225,7 @@ class Player(MCStalker):
             return obj
         if status == 403:
             raise self.invalidApiKey(player["error"])
-        else:
-            raise self.playerNotFound(player["error"])
+        raise self.playerNotFound(player["error"])
 
 
 class Server(MCStalker):
@@ -438,8 +437,7 @@ class Server(MCStalker):
             return server
         if status == 403:
             raise self.invalidApiKey(response.get("error"))
-        else:
-            raise self.serverNotFound(response.get("error"))
+        raise self.serverNotFound(response.get("error"))
 
     async def returnTopServers(
         self,
