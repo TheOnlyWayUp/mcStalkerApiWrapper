@@ -16,6 +16,7 @@ class MCStalker:
 
 
 class Stats(MCStalker):
+    """The Stats class."""
     class _Stats:
         """The statistics of the API.
         updated: str = The last time the statistics were updated.
@@ -230,6 +231,7 @@ class Server(MCStalker):
     """The Server class, which is used to generate information about a server.
     """
     class _ipInfo:
+        """The _ipInfo object, which is used to generate information about an IP."""
         loc = None
         org = None
         city = None
