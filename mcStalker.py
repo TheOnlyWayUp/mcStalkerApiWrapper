@@ -2,6 +2,8 @@ import asyncio, aiohttp, json
 
 
 class MCStalker:
+    """The Parent Class, Do not import this.
+    """
     def __init__(self, apiKey):
         self.key = apiKey
 
