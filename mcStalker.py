@@ -30,6 +30,14 @@ class Stats(MCStalker):
         raw: dict = None
 
     def returnCleanStatsDict(self, stats: dict):
+        """Returns the statistics of the API.
+
+        Args:
+            stats (dict): The statistics of the API.
+
+        Returns:
+            dict: The statistics of the API.
+        """
         _stats = {}
         _stats["lastUpdated"] = stats.get("updated")
         _stats["servers"] = stats.get("servers")
@@ -37,6 +45,11 @@ class Stats(MCStalker):
         return _stats
 
     def returnStatsObject(self, statsDict: dict):
+        """Returns the statistics of the API.
+
+        Args:
+            statsDict (dict): The statistics of the API.
+        """
         stats = self._Stats()
         stats.updated = statsDict.get("lastUpdated")
         stats.servers = statsDict.get("servers")
@@ -44,6 +57,14 @@ class Stats(MCStalker):
         stats.raw = statsDict
 
     async def requestStats(self):
+        """Requests the statistics of the API.
+
+        Raises:
+            MCStalker.invalidApiKey: If the API key is invalid.
+
+        Returns:
+            dict: The statistics of the API.
+        """
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 "https://backend.mcstalker.com/api/stats",
@@ -55,11 +76,17 @@ class Stats(MCStalker):
                     raise MCStalker.invalidApiKey(await resp.json()["message"])
 
     async def returnStats(self):
+        """Returns the statistics of the API.
+
+        Returns:
+            Stats._Stats: The statistics of the API.
+        """
         return self.returnStatsObject(
             self.returnCleanStatsDict(await self.requestStats())
         )
 
 def Help():
+    """Returns the help message."""
     x = """
 The MCStalker API Wrapper
 ---------------------------
@@ -122,6 +149,14 @@ class Player(MCStalker):
             return "Player was not found - {0} ".format(self.message)
 
     async def requestPlayer(self, url):
+        """Requests a player.
+
+        Args:
+            url ([str]): The url of the player.
+
+        Returns:
+            dict: The player information.
+        """
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 url, headers={"Authorization": f"Bearer {self.key}"}
@@ -146,6 +181,14 @@ class Player(MCStalker):
         return _player
 
     def returnCleanPlayerDict(self, player: dict):
+        """Returns a cleaned player dict.
+
+        Args:
+            player (dict): The dict containing player information.
+
+        Returns:
+            dict: The cleaned player dict.
+        """
         _player = {
             "name": player.get("username"),
             "uuid": player.get("uuid"),
@@ -156,6 +199,18 @@ class Player(MCStalker):
         return _player
 
     async def returnPlayer(self, username):
+        """Returns a player object.
+
+        Args:
+            username (str): The username of the player.
+
+        Raises:
+            self.invalidApiKey: If the API key is invalid.
+            self.playerNotFound: If the player was not found.
+
+        Returns:
+            Player._Player: The player object.
+        """
         player = await self.requestPlayer(
             "https://backend.mcstalker.com/api/searchusername/" + username
         )
@@ -172,6 +227,8 @@ class Player(MCStalker):
 
 
 class Server(MCStalker):
+    """The Server class, which is used to generate information about a server.
+    """
     class _ipInfo:
         loc = None
         org = None
@@ -220,7 +277,7 @@ class Server(MCStalker):
         def __str__(self):
             return "Server was not found - {0} ".format(self.message)
 
-    def returnCleanMotd(self, motd):
+    def returnCleanMotd(self, motd) -> str:
         """DONT USE, ALTERNATIVE USED IN CODE!!!
         Returns a cleaned MOTD.
 
@@ -241,7 +298,7 @@ class Server(MCStalker):
                 return self.returnCleanMotd(motd["extra"])
         return None
 
-    def returnCleanServerDict(self, server: dict):
+    def returnCleanServerDict(self, server: dict) -> dict:
         """Returns a clean dict with only the things we need in all the correct places.
 
         Args:
@@ -267,7 +324,7 @@ class Server(MCStalker):
         }
         return _server
 
-    def returnServerObject(self, server: dict):
+    def returnServerObject(self, server: dict) -> Server._Server:
         """Converts a dictionary to a Server object.
 
         Args:
@@ -301,7 +358,7 @@ class Server(MCStalker):
         _server.raw = server
         return _server
 
-    def returnIpObject(self, ipInfo: dict):
+    def returnIpObject(self, ipInfo: dict) -> Server._ipInfo:
         """Converts a dictionary to an IP_Info object.
 
         Args:
@@ -321,14 +378,30 @@ class Server(MCStalker):
         _ipInfo.timezone = ipInfo.get("timezone")
         return _ipInfo
 
-    async def requestServer(self, url):
+    async def requestServer(self, url:str):
+        """Requests a server from the API.
+
+        Args:
+            url (str): The URL to request.
+
+        Returns:
+            dict: The JSON response.
+        """
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 url, headers={"Authorization": f"Bearer {self.key}"}
             ) as response:
                 return await response.json(), response.status
 
-    async def requestTopServers(self, data):
+    async def requestTopServers(self, data:dict) -> dict:
+        """Requests a list of servers from the API.
+
+        Args:
+            data (dict): The data to send.
+
+        Returns:
+            dict: The JSON response.
+        """
         url = "https://backend.mcstalker.com/api/filterservers"
         async with aiohttp.ClientSession() as session:
             async with session.post(
@@ -341,7 +414,7 @@ class Server(MCStalker):
             ) as resp:
                 return await resp.json(content_type="application/json"), resp.status
 
-    async def returnServer(self, ip: str):
+    async def returnServer(self, ip: str) -> Server._Server:
         """Returns a Server object.
 
         Args:
@@ -374,7 +447,7 @@ class Server(MCStalker):
         vanilla: bool = False,
         motd: str = "",
         page: int = 1,
-    ):
+    ) -> list:
         """Returns the top servers as per the parameters defined. You can run the function without passing any, it'll return servers as per the recommended options.
         Version: 1.17.1
         Sort: Most recently added.
