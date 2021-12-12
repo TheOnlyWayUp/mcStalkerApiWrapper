@@ -2,6 +2,17 @@ The MCStalker API Wrapper
 ---------------------------
 Async-Friendly wrapper for the MCStalker API.
 
+**Check out the [Wiki](https://github.com/TheOnlyWayUp/mcStalkerApiWrapper/wiki) for examples and more information!**
+
+Discord - https://discord.gg/bQhzbg27cm
+
+MCStalker - [https://mcstalker.com](https://mcstalker.com/ref/mcstalkerispog)
+
+Created by TheOnlyWayUp#1231
+
+----------
+
+
 Endpoints currently supported - 
 - /stats
 - /searchusername
