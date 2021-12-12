@@ -26,29 +26,29 @@ YOU NEED AN API KEY TO USE THIS WRAPPER.
 You can get a key at https://mcstalker.com/register
 
 Imports - 
-- from mcStalker import Player(apiKey)
-- from mcStalker import Server(apiKey)
-- from mcStalker import Stats(apiKey)
+- from mcStalker.mcStalker import Player(apiKey)
+- from mcStalker.mcStalker import Server(apiKey)
+- from mcStalker.mcStalker import Stats(apiKey)
 
 Usage -
 
 Stats -
   ```python
-      from mcStalker import Stats
+      from mcStalker.mcStalker import Stats
       stats = Stats(apiKey)
       asyncio.run(stats.returnStats() -> Stats._Stats Object)
   ```
 
 Player -
   ```python
-      from mcStalker import Player
+      from mcStalker.mcStalker import Player
       player = Player(apiKey)
       asyncio.run(player.returnPlayer(username) -> Player._Player Object)
   ```
   
 Server - 
   ```python
-      from mcStalker import Server
+      from mcStalker.mcStalker import Server
       server = Server(apiKey)
       asyncio.run(server.returnServer(ip) -> Server._Server Object)
       asyncio.run(server.returnTopServers() -> [Server._Server Object, Server._Server Object, ...])
