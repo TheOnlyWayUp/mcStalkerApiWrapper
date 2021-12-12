@@ -1,14 +1,24 @@
-#NEEDS PIP INSTALL CPRINT TO WORK
-
-import MCStalker, asyncio
-from cprint import *
+import mcStalker.mcStalker as MCStalker, asyncio
 
 allGood = 0
 
+class cprint:
+    """Prints colored text."""
+    def ok(self, text):
+        """Prints text in green."""
+        print(f"\033[92m{text}\033[0m")
+    def fatal(self, text):
+        """Prints text in red."""
+        print(f"\033[91m{text}\033[0m")
+    def warn(self, text):
+        """Prints text in yellow."""
+        print(f"\033[93m{text}\033[0m")
+    def info(self, text):
+        """Prints text in blue."""
+        print(f"\033[94m{text}\033[0m")
 
 def testApiKeys():
-    """Test if the API is working correctly.
-    """
+    """Test if the API is working correctly."""
     global allGood
     cprint("------------ CURRENTLY TESTING BAD API KEYS ------------\n")
     stats = MCStalker.Stats("balls")
@@ -41,8 +51,7 @@ def testApiKeys():
 
 
 def testSearches():
-    """Test if the API is working correctly.
-    """
+    """Test if the API is working correctly."""
     global allGood
     cprint("\n\n------------ CURRENTLY TESTING SEARCHES ------------\n")
     key = input("Enter your API Key: ")
@@ -90,4 +99,4 @@ testSearches()
 if allGood == 8:
     cprint.info("Everything is working correctly.")
 else:
-    cprint.fatal("Not all endpoints are working correctly.", interrupt=False)
+    cprint.fatal("Not all endpoints are working correctly.")
