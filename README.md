@@ -8,6 +8,8 @@ Discord - https://discord.gg/bQhzbg27cm
 
 MCStalker - [https://mcstalker.com](https://mcstalker.com/ref/mcstalkerispog)
 
+Pypi - https://pypi.org/project/mcStalker
+
 Created by TheOnlyWayUp#1231
 
 ----------
