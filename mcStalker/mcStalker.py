@@ -188,7 +188,8 @@ class Player(MCStalker):
         _player.raw = player
         return _player
 
-    def returnCleanPlayerDict(self, player: dict):
+    @staticmethod
+    def returnCleanPlayerDict(player: dict):
         """Returns a cleaned player dict.
 
         Args:
@@ -307,7 +308,8 @@ class Server(MCStalker):
                 return self.returnCleanMotd(motd["extra"])
         return None
 
-    def returnCleanServerDict(self, server: dict) -> dict:
+    @staticmethod
+    def returnCleanServerDict(server: dict) -> dict:
         """Returns a clean dict with only the things we need in all the correct places.
 
         Args:
