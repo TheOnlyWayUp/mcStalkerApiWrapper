@@ -6,16 +6,20 @@ class cprint:
     """Prints colored text."""
     def __call__(self, text):
         print(f"\033[96m{text}\033[0m")
-    def ok(self, text):
+    @staticmethod
+    def ok(text):
         """Prints text in green."""
         print(f"\033[92m{text}\033[0m")
-    def fatal(self, text):
+    @staticmethod
+    def fatal(text):
         """Prints text in red."""
         print(f"\033[91m{text}\033[0m")
-    def warn(self, text):
+    @staticmethod
+    def warn(text):
         """Prints text in yellow."""
         print(f"\033[93m{text}\033[0m")
-    def info(self, text):
+    @staticmethod
+    def info(text):
         """Prints text in blue."""
         print(f"\033[94m{text}\033[0m")
 
