@@ -13,7 +13,11 @@ Pypi - https://pypi.org/project/mcStalker
 Created by TheOnlyWayUp#1231
 
 ----------
+![](https://shields.io/pypi/v/mcStalker?style=for-the-badge)
+![](https://img.shields.io/pypi/dd/mcStalker?style=for-the-badge)
+![](https://img.shields.io/github/commit-activity/w/TheOnlyWayUp/mcStalkerApiWrapper?style=for-the-badge)
 
+----------
 
 Endpoints currently supported - 
 - /stats
