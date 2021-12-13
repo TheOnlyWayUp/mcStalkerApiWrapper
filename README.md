@@ -27,7 +27,7 @@ Endpoints currently supported -
 
 YOU NEED AN API KEY TO USE THIS WRAPPER.
 
-You can get a key at https://mcstalker.com/register
+You can get a key at https://mcstalker.com/register (The endpoint doesn't exist yet, will be implemented soon)
 
 Imports - 
 - from mcStalker.mcStalker import Player(apiKey)
